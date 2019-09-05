@@ -7,15 +7,20 @@ Each cluster will consist of a single all-in-one node, and will have integration
 
 ## Installation
 
+Install the driver on the same host, VPS, Container that has the magnum-api, and magnum-conductor running.
+
 ### 1. Install the Minikube K8s driver in Magnum
 
 - To install the driver and run:
-
-       `make install`
+```
+      make install
+```
 
 ### 2. Enable driver in magnum.conf
-
+The driver can be explicitly enabled with the following (although it should be automatically discovered anyway):
+```
       enabled_definitions = ...,magnum_vm_atomic_minikube
+```
 
 With DevStack, this can be done with something like:
 ``` local.conf
@@ -86,5 +91,3 @@ Now a cluster can be launched with the following:
 ```
 openstack coe cluster create minikube --cluster-template minikube-template --timeout 25
 ```
-
-
