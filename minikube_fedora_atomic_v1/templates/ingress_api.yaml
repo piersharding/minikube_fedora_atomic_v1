@@ -1,0 +1,89 @@
+heat_template_version: 2014-10-16
+
+parameters:
+
+  fixed_subnet:
+    type: string
+
+  external_network:
+    type: string
+
+  protocol:
+    type: string
+    default: TCP
+    constraints:
+      - allowed_values: ["TCP", "HTTP"]
+
+  # port:
+  #   type: number
+
+resources:
+  loadbalancer:
+    type: Magnum::Optional::Neutron::LBaaS::LoadBalancer
+    properties:
+      vip_subnet: {get_param: fixed_subnet}
+
+  listener80:
+    type: Magnum::Optional::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: {get_resource: loadbalancer}
+      protocol: {get_param: protocol}
+      protocol_port: 80
+
+  pool80:
+    type: Magnum::Optional::Neutron::LBaaS::Pool
+    properties:
+      lb_algorithm: ROUND_ROBIN
+      listener: {get_resource: listener80}
+      protocol: {get_param: protocol}
+
+  monitor80:
+    type: Magnum::Optional::Neutron::LBaaS::HealthMonitor
+    properties:
+      type: TCP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+      pool: { get_resource: pool80 }
+
+  listener443:
+    type: Magnum::Optional::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: {get_resource: loadbalancer}
+      protocol: {get_param: protocol}
+      protocol_port: 443
+
+  pool443:
+    type: Magnum::Optional::Neutron::LBaaS::Pool
+    properties:
+      lb_algorithm: ROUND_ROBIN
+      listener: {get_resource: listener443}
+      protocol: {get_param: protocol}
+
+  monitor443:
+    type: Magnum::Optional::Neutron::LBaaS::HealthMonitor
+    properties:
+      type: TCP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+      pool: { get_resource: pool443 }
+
+  floating:
+    type: Magnum::Optional::Neutron::LBaaS::FloatingIP
+    properties:
+      floating_network: {get_param: external_network}
+      port_id: {get_attr: [loadbalancer, vip_port_id]}
+
+outputs:
+  pool_id_80:
+    value: {get_resource: pool80}
+
+  pool_id_443:
+    value: {get_resource: pool443}
+
+  address:
+    value: {get_attr: [loadbalancer, vip_address]}
+
+  floating_address:
+    value: {get_attr: [floating, floating_ip_address]}
