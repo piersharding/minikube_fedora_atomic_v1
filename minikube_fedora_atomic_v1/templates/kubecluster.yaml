@@ -1134,34 +1134,24 @@ resources:
             #       "$CA_KEY": {get_param: ca_key}
             - get_file: ./fragments/kube-apiserver-to-kubelet-role.sh
             - get_file: ./fragments/kube-nginx-ingress.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/core-dns-service.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/calico-service.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/flannel-service.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-helm-tiller.sh
-            # - str_replace:
-            #     template: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-prometheus-monitoring.sh}
-            #     params:
-            #       "$ADMIN_PASSWD": {get_param: grafana_admin_passwd}
-            # - str_replace:
-            #     params:
-            #       $enable-ingress-traefik: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-ingress-traefik.sh}
-            #       $enable-ingress-octavia: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-ingress-octavia.sh}
-            #     template: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-ingress-controller.sh}
+            - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-helm-tiller.sh
+            - str_replace:
+                template: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-prometheus-monitoring.sh}
+                params:
+                  "$ADMIN_PASSWD": {get_param: grafana_admin_passwd}
             - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/kube-dashboard-service.sh
             - str_replace:
                 template: {get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-keystone-auth.sh}
                 params:
                   "$KEYSTONE_AUTH_DEFAULT_POLICY": {get_param: keystone_auth_default_policy}
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-auto-healing.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/enable-auto-scaling.sh
-            # # Helm Based Installation Configuration Scripts
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/helm/metrics-server.sh
-            # - str_replace:
-            #     template: {get_file:  ../../../magnum/drivers/common/templates/kubernetes/helm/prometheus-operator.sh}
-            #     params:
-            #       "${ADMIN_PASSWD}": {get_param: grafana_admin_passwd}
+            # Helm Based Installation Configuration Scripts
+            - get_file: ../../../magnum/drivers/common/templates/kubernetes/helm/metrics-server.sh
+            - str_replace:
+                template: {get_file:  ../../../magnum/drivers/common/templates/kubernetes/helm/prometheus-operator.sh}
+                params:
+                  "${ADMIN_PASSWD}": {get_param: grafana_admin_passwd}
             # - get_file: ../../../magnum/drivers/common/templates/kubernetes/helm/ingress-nginx.sh
-            # - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/install-helm-modules.sh
+            - get_file: ../../../magnum/drivers/common/templates/kubernetes/fragments/install-helm-modules.sh
 
   kube_cluster_deploy:
     type: OS::Heat::SoftwareDeployment

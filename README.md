@@ -5,6 +5,8 @@ Minikube based Kubernetes cluster on Fedora Atomic.
 
 Each cluster will consist of a single all-in-one node, and will have integration with OpenStack Keystone, Octavia, and Cinder enabled.
 
+This has been tested with OpenStack Train and above.
+
 ## Installation
 
 Install the driver on the same host, VPS, Container that has the magnum-api, and magnum-conductor running.
