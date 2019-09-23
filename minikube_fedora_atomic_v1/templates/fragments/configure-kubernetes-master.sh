@@ -390,7 +390,10 @@ export KUBECONFIG=$HOME/.kube/config
 minikube status
 
 # install etcd for calico
-kubectl apply -f https://docs.projectcalico.org/$ETCD_VERSION/getting-started/kubernetes/installation/hosted/etcd.yaml && sleep 5
+# this version is broken with apiVersion and selector
+# kubectl apply -f https://docs.projectcalico.org/$ETCD_VERSION/getting-started/kubernetes/installation/hosted/etcd.yaml && sleep 5
+kubectl apply -f /srv/magnum/kubernetes/etcd.yaml && sleep 5
+
 ETCD_ENDPOINT=\`kubectl get service -o json --namespace=kube-system calico-etcd | jq  -r .spec.clusterIP\`
 # install calico
 curl -Lo /tmp/calico.yaml https://docs.projectcalico.org/$ETCD_VERSION/getting-started/kubernetes/installation/hosted/calico.yaml
@@ -421,4 +424,95 @@ chown -R fedora:fedora /home/fedora/.kube
 #atomic install --storage ostree --system --system-package=no --name=kube-apiserver ${_prefix}kubernetes-apiserver:${KUBE_TAG}
 EOF
 chmod +x /srv/magnum/kubernetes/install-kubernetes.sh
+
+# etcd yaml is broken so we add our own here
+cat >/srv/magnum/kubernetes/etcd.yaml << EOF
+# based on v3.9 - fixes apiVersion and selector
+# This manifest installs the Calico etcd on the kubeadm master.  This uses a DaemonSet
+# to force it to run on the master even when the master isn't schedulable, and uses
+# nodeSelector to ensure it only runs on the master.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+ name: calico-etcd
+ namespace: kube-system
+ labels:
+   k8s-app: calico-etcd
+spec:
+ selector:
+   matchLabels:
+     k8s-app: calico-etcd
+ template:
+   metadata:
+     labels:
+       k8s-app: calico-etcd
+     annotations:
+       # Mark this pod as a critical add-on; when enabled, the critical add-on scheduler
+       # reserves resources for critical add-on pods so that they can be rescheduled after
+       # a failure.  This annotation works in tandem with the toleration below.
+       scheduler.alpha.kubernetes.io/critical-pod: ''
+   spec:
+     tolerations:
+       # This taint is set by all kubelets running `--cloud-provider=external`
+       # so we should tolerate it to schedule the Calico pods
+       - key: node.cloudprovider.kubernetes.io/uninitialized
+         value: "true"
+         effect: NoSchedule
+       # Allow this pod to run on the master.
+       - key: node-role.kubernetes.io/master
+         effect: NoSchedule
+       # Allow this pod to be rescheduled while the node is in "critical add-ons only" mode.
+       # This, along with the annotation above marks this pod as a critical add-on.
+       - key: CriticalAddonsOnly
+         operator: Exists
+     # Only run this pod on the master.
+     nodeSelector:
+       node-role.kubernetes.io/master: ""
+     hostNetwork: true
+     containers:
+       - name: calico-etcd
+         image: quay.io/coreos/etcd:v3.3.9
+         env:
+           - name: CALICO_ETCD_IP
+             valueFrom:
+               fieldRef:
+                 fieldPath: status.podIP
+         command:
+         - /usr/local/bin/etcd
+         args:
+         - --name=calico
+         - --data-dir=/var/etcd/calico-data
+         - --advertise-client-urls=http://$(CALICO_ETCD_IP):6666
+         - --listen-client-urls=http://0.0.0.0:6666
+         - --listen-peer-urls=http://0.0.0.0:6667
+         - --auto-compaction-retention=1
+         volumeMounts:
+           - name: var-etcd
+             mountPath: /var/etcd
+     volumes:
+       - name: var-etcd
+         hostPath:
+           path: /var/etcd
+
+---
+# This manifest installs the Service which gets traffic to the Calico
+# etcd.
+apiVersion: v1
+kind: Service
+metadata:
+ labels:
+   k8s-app: calico-etcd
+ name: calico-etcd
+ namespace: kube-system
+spec:
+ # Select the calico-etcd pod running on the master.
+ selector:
+   k8s-app: calico-etcd
+ # This ClusterIP needs to be known in advance, since we cannot rely
+ # on DNS to get access to etcd.
+ clusterIP: 10.96.232.136
+ ports:
+   - port: 6666
+EOF
+
 $ssh_cmd "/srv/magnum/kubernetes/install-kubernetes.sh"

@@ -355,7 +355,7 @@ parameters:
   minikube_version:
     type: string
     description: version of minikube to use
-    default: v1.3.1
+    default: v1.4.0
 
   kubectl_version:
     type: string
@@ -365,7 +365,7 @@ parameters:
   etcd_version:
     type: string
     description: version of etcd to use
-    default: v3.6
+    default: v3.9
 
   master_kube_tag:
     type: string

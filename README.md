@@ -74,7 +74,7 @@ openstack coe cluster template create minikube-template \
   --docker-volume-size 25 \
   --docker-storage-driver overlay \
   --dns-nameserver 8.8.8.8 \
-  --labels minikube_version=v1.3.1,etcd_version=v3.7,heat_container_agent_tag=train-dev,occm_container_infra_prefix=docker.io/piersharding/,cloud_provider_tag=latest \
+  --labels minikube_version=v1.4.0,etcd_version=v3.9,heat_container_agent_tag=train-dev,occm_container_infra_prefix=docker.io/piersharding/,cloud_provider_tag=latest \
   --keypair testkey \
   --external-network $(openstack network show public -f value -c id) \
   --flavor m1.medium --master-flavor m1.medium --network-driver calico \
