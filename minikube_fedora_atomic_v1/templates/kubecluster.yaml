@@ -355,7 +355,7 @@ parameters:
   minikube_version:
     type: string
     description: version of minikube to use
-    default: v1.4.0
+    default: v1.5.2
 
   kubectl_version:
     type: string
